@@ -1,48 +1,42 @@
 """
-Database Schemas
+Database Schemas for the Restaurant app
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB.
+Collection name is the lowercase class name (e.g., MenuItem -> "menuitem").
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-from pydantic import BaseModel, Field
-from typing import Optional
+# Core domain schemas
+class MenuItem(BaseModel):
+    name: str = Field(..., description="Dish name")
+    description: Optional[str] = Field(None, description="Short description of the dish")
+    price: float = Field(..., ge=0, description="Price in USD")
+    category: str = Field(..., description="Category like Starters, Mains, Desserts, Drinks")
+    image: Optional[str] = Field(None, description="Image URL")
+    is_vegan: bool = Field(False)
+    is_spicy: bool = Field(False)
+    is_gluten_free: bool = Field(False)
+    featured: bool = Field(False, description="Showcase on hero/featured section")
 
-# Example schemas (replace with your own):
+class Reservation(BaseModel):
+    name: str = Field(..., description="Guest full name")
+    email: EmailStr
+    phone: Optional[str] = Field(None)
+    date: str = Field(..., description="ISO date string (YYYY-MM-DD)")
+    time: str = Field(..., description="24h time string (HH:MM)")
+    party_size: int = Field(..., ge=1, le=20)
+    notes: Optional[str] = None
+    occasion: Optional[str] = Field(None, description="Birthday, Anniversary, Business, etc.")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Review(BaseModel):
+    name: str
+    rating: int = Field(..., ge=1, le=5)
+    comment: str
+    date: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+# Example additional schemas users can expand later
+class NewsletterSignup(BaseModel):
+    email: EmailStr
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
